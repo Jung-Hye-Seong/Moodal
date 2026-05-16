@@ -12,7 +12,7 @@ app.use(cors({
 }));
 
 const client = new Mistral({
-  apiKey: "eB6qrTGyIgKLKrSAcxaURlrhE0IsPidD"
+  apiKey: "MISTRAL AI API KEY"
 });
 const conversations = new Map();
 const temMemory = [];
