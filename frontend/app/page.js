@@ -129,7 +129,7 @@ export default function Home() {
     async function loadMemory() {
       try {
         const res = await fetch(
-          "http://localhost:4000/call-memory"
+          "https://moodal.vercel.app/call-memory"
         );
 
         const data = await res.json();
@@ -182,7 +182,7 @@ export default function Home() {
     setPrompt("");
 
     const res = await fetch(
-      "http://localhost:4000/get-response",
+      "https://moodal.vercel.app/get-response",
       {
         method: "POST",
 
