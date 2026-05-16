@@ -8,7 +8,7 @@ const port = 4000;
 app.use(express.json());
 
 app.use(cors({
-  origin: "*"
+  origin: "https://moodal.vercel.app/"
 }));
 
 const client = new Mistral({
@@ -123,5 +123,5 @@ ${temMemory
 }
 
 app.listen(port, () => {
-  console.log(`Server running: http://localhost:${port}`);
+  console.log(`Server running`);
 });
