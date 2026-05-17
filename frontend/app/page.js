@@ -129,7 +129,7 @@ export default function Home() {
     async function loadMemory() {
       try {
         const res = await fetch(
-          "/call-memory"
+          "https://moodal-production.up.railway.app/call-memory"
         );
 
         const data = await res.json();
@@ -182,7 +182,7 @@ export default function Home() {
     setPrompt("");
 
     const res = await fetch(
-      "/get-response",
+      "https://moodal-production.up.railway.app/get-response",
       {
         method: "POST",
 
