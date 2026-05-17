@@ -64,15 +64,34 @@ const themes = {
 export default function Home() {
   const audioRef = useRef(null);
 
-  const [startedAudio, setStartedAudio] = useState(false);
+  const [startedAudio, setStartedAudio] =
+    useState(false);
 
   const [prompt, setPrompt] = useState("");
 
   const [messages, setMessages] = useState([]);
 
-  const [theme, setTheme] = useState(themes[4]);
+  const [theme, setTheme] = useState(
+    themes[4]
+  );
 
   const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    let id =
+      localStorage.getItem("userId");
+
+    if (!id) {
+      id = crypto.randomUUID();
+
+      localStorage.setItem(
+        "userId",
+        id
+      );
+    }
+
+    setUserId(id);
+  }, []);
 
   useEffect(() => {
     const tracks = [
@@ -87,18 +106,25 @@ export default function Home() {
       "/calm9.mp3"
     ];
 
-    function getRandomTrack(currentSrc = "") {
+    function getRandomTrack(
+      currentSrc = ""
+    ) {
       let nextTrack;
 
       do {
         nextTrack =
           tracks[
-            Math.floor(Math.random() * tracks.length)
+            Math.floor(
+              Math.random() *
+              tracks.length
+            )
           ];
       }
 
       while (
-        currentSrc.includes(nextTrack)
+        currentSrc.includes(
+          nextTrack
+        )
       );
 
       return nextTrack;
@@ -112,15 +138,19 @@ export default function Home() {
 
     audioRef.current = audio;
 
-    audio.addEventListener("ended", () => {
-      const nextTrack = getRandomTrack(
-        audio.src
-      );
+    audio.addEventListener(
+      "ended",
+      () => {
+        const nextTrack =
+          getRandomTrack(
+            audio.src
+          );
 
-      audio.src = nextTrack;
+        audio.src = nextTrack;
 
-      audio.play();
-    });
+        audio.play();
+      }
+    );
 
     return () => {
       audio.pause();
@@ -128,40 +158,41 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    useEffect(() => {
-      let id = localStorage.getItem("userId");
-    
-      if (!id) {
-        id = crypto.randomUUID();
-    
-        localStorage.setItem("userId", id);
-      }
-    
-      setUserId(id);
-    }, []);
+    if (!userId) return;
+
     async function loadMemory() {
       try {
         const res = await fetch(
           `https://moodal-production.up.railway.app/call-memory/${userId}`
         );
 
-        const data = await res.json();
+        const data =
+          await res.json();
 
-        if (Array.isArray(data.temMemory)) {
+        if (
+          Array.isArray(
+            data.temMemory
+          )
+        ) {
+          const formatted =
+            data.temMemory.flatMap(
+              (item) => [
+                {
+                  role: "user",
+                  content:
+                    item.user
+                },
 
-          const formatted = data.temMemory.flatMap((item) => [
-            {
-              role: "user",
-              content: item.user
-            },
+                {
+                  role: "ai",
+                  content: item.ai
+                }
+              ]
+            );
 
-            {
-              role: "ai",
-              content: item.ai
-            }
-          ]);
-
-          setMessages(formatted);
+          setMessages(
+            formatted
+          );
         }
 
       } catch (err) {
@@ -175,7 +206,10 @@ export default function Home() {
   async function handleSubmit() {
     if (!prompt.trim()) return;
 
-    if (!startedAudio && audioRef.current) {
+    if (
+      !startedAudio &&
+      audioRef.current
+    ) {
       audioRef.current.play();
 
       setStartedAudio(true);
@@ -200,22 +234,27 @@ export default function Home() {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json"
         },
-      
-      body: JSON.stringify({
-        userId,
-        prompt: currentPrompt
-      }),
+
+        body: JSON.stringify({
+          userId,
+          prompt: currentPrompt
+        })
       }
     );
 
     const data = await res.json();
 
-    const colorCode = Number(data.colorCode);
+    const colorCode = Number(
+      data.colorCode
+    );
 
     if (themes[colorCode]) {
-      setTheme(themes[colorCode]);
+      setTheme(
+        themes[colorCode]
+      );
     }
 
     setMessages((prev) => [
@@ -240,7 +279,8 @@ export default function Home() {
         className="header"
         style={{
           background: theme.third,
-          borderColor: theme.secondary
+          borderColor:
+            theme.secondary
         }}
       >
         <div className="logo">
@@ -249,12 +289,13 @@ export default function Home() {
       </header>
 
       <div className="layout">
-
         <aside
           className="sidebar"
           style={{
-            background: theme.secondary,
-            borderColor: theme.main
+            background:
+              theme.secondary,
+            borderColor:
+              theme.main
           }}
         >
           <div className="sidebar-title">
@@ -263,75 +304,85 @@ export default function Home() {
         </aside>
 
         <main className="chat-wrapper">
-
           <div className="chat-messages">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`message ${msg.role}`}
-                style={{
-                  background:
-                    msg.role === "user"
-                      ? theme.main
-                      : "#FFFFFF",
+            {messages.map(
+              (msg, index) => (
+                <div
+                  key={index}
+                  className={`message ${msg.role}`}
+                  style={{
+                    background:
+                      msg.role ===
+                      "user"
+                        ? theme.main
+                        : "#FFFFFF",
 
-                  color: theme.text,
+                    color:
+                      theme.text,
 
-                  whiteSpace: "pre-wrap"
-                }}
-              >
-                {msg.content}
-              </div>
-            ))}
+                    whiteSpace:
+                      "pre-wrap"
+                  }}
+                >
+                  {msg.content}
+                </div>
+              )
+            )}
           </div>
 
           <div
             className="chat-input-container"
             style={{
-              background: "#FFFFFF",
-              borderColor: theme.secondary
+              background:
+                "#FFFFFF",
+              borderColor:
+                theme.secondary
             }}
           >
             <textarea
               placeholder="Message Moodal..."
               value={prompt}
-
               onChange={(e) => {
-                setPrompt(e.target.value);
+                setPrompt(
+                  e.target.value
+                );
 
-                e.target.style.height = "auto";
+                e.target.style.height =
+                  "auto";
 
                 e.target.style.height =
                   `${e.target.scrollHeight}px`;
               }}
-
               onKeyDown={(e) => {
                 if (
-                  e.key === "Enter" &&
+                  e.key ===
+                    "Enter" &&
                   !e.shiftKey
                 ) {
                   e.preventDefault();
 
                   handleSubmit();
 
-                  e.target.style.height = "auto";
+                  e.target.style.height =
+                    "auto";
                 }
               }}
-
               rows={1}
             />
 
             <button
-              onClick={handleSubmit}
+              onClick={
+                handleSubmit
+              }
               style={{
-                background: theme.main,
+                background:
+                  theme.main,
                 color: theme.text
               }}
             >
               Send
             </button>
           </div>
-
         </main>
       </div>
     </div>
