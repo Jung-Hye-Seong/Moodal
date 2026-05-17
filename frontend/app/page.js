@@ -72,6 +72,8 @@ export default function Home() {
 
   const [theme, setTheme] = useState(themes[4]);
 
+  const [userId, setUserId] = useState("");
+
   useEffect(() => {
     const tracks = [
       "/calm1.mp3",
@@ -126,10 +128,21 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    useEffect(() => {
+      let id = localStorage.getItem("userId");
+    
+      if (!id) {
+        id = crypto.randomUUID();
+    
+        localStorage.setItem("userId", id);
+      }
+    
+      setUserId(id);
+    }, []);
     async function loadMemory() {
       try {
         const res = await fetch(
-          "https://moodal-production.up.railway.app/call-memory"
+          `https://moodal-production.up.railway.app/call-memory/${userId}`
         );
 
         const data = await res.json();
@@ -157,7 +170,7 @@ export default function Home() {
     }
 
     loadMemory();
-  }, []);
+  }, [userId]);
 
   async function handleSubmit() {
     if (!prompt.trim()) return;
@@ -189,10 +202,11 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-
-        body: JSON.stringify({
-          prompt: currentPrompt
-        }),
+      
+      body: JSON.stringify({
+        userId,
+        prompt: currentPrompt
+      }),
       }
     );
 
