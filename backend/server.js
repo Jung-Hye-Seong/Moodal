@@ -3,7 +3,7 @@ const cors = require("cors");
 const { Mistral } = require("@mistralai/mistralai");
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 app.use(express.json());
 
@@ -14,11 +14,19 @@ app.use(cors({
 const client = new Mistral({
   apiKey: "eB6qrTGyIgKLKrSAcxaURlrhE0IsPidD"
 });
+
 const conversations = new Map();
-const temMemory = [];
+const memories = new Map();
+
 app.post("/get-response", async (req, res) => {
   try {
     const { userId, prompt } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        error: "userId required"
+      });
+    }
 
     if (!prompt) {
       return res.status(400).json({
@@ -41,7 +49,9 @@ app.post("/get-response", async (req, res) => {
         ]
       });
 
-      conversationId = response.conversationId || response.conversation_id;
+      conversationId =
+        response.conversationId ||
+        response.conversation_id;
 
       conversations.set(userId, conversationId);
     }
@@ -60,13 +70,26 @@ app.post("/get-response", async (req, res) => {
       });
     }
 
-    const output = response.outputs?.[0]?.content || "No response";
-		temMemory.push({ "user": prompt, "ai": output });
-    const color = await getColorCode();
-    console.log("Color Code:", color);
+    const output =
+      response.outputs?.[0]?.content ||
+      "No response";
+
+    if (!memories.has(userId)) {
+      memories.set(userId, []);
+    }
+
+    const userMemory = memories.get(userId);
+
+    userMemory.push({
+      user: prompt,
+      ai: output
+    });
+
+    const color = await getColorCode(userMemory);
+
     res.json({
       response: output,
-			colorCode: color,
+      colorCode: color,
       conversationId
     });
 
@@ -79,49 +102,53 @@ app.post("/get-response", async (req, res) => {
   }
 });
 
-app.get("/call-memory", (req, res) => {
+app.get("/call-memory/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  const userMemory =
+    memories.get(userId) || [];
+
   res.json({
-    temMemory
+    temMemory: userMemory
   });
 });
 
-async function getColorCode() {
-	const response = await client.chat.complete({
-		model: "mistral-large-latest",
-		messages: [
-			{
-				role: "user",
-				content: `
+async function getColorCode(memory) {
+  const response = await client.chat.complete({
+    model: "mistral-large-latest",
+    messages: [
+      {
+        role: "user",
+        content: `
 You will analyze the conversation and choose the single most fitting color category from the list below.
 
 Categories:
-0 = Red → Passion, Love, Energy, Courage, Power
-1 = Orange → Creativity, Warmth, Fun, Adventure, Optimism
-2 = Yellow → Happiness, Brightness, Hope, Cheerfulness, Positivity
-3 = Green → Nature, Growth, Balance, Health, Freshness
-4 = Blue → Calmness, Trust, Stability, Intelligence, Peace
-5 = Purple → Mystery, Luxury, Imagination, Wisdom, Magic
-6 = Black → Elegance, Strength, Authority, Depth, Sophistication
-7 = White → Purity, Simplicity, Cleanliness, Innocence, Clarity (Basic Mode)
+0 = Red
+1 = Orange
+2 = Yellow
+3 = Green
+4 = Blue
+5 = Purple
+6 = Black
+7 = White
 
 Rules:
 - Return ONLY one number from 0 to 7.
-- Do not explain your reasoning.
-- Do not output any extra text.
-- Choose the category that best matches the overall emotional tone, atmosphere, personality of the conversation or mentioned colors.
+- Do not explain.
+- No extra text.
 
 Conversation:
-${temMemory
-	.map(m => `User: ${m.user}\nAI: ${m.ai}`)
-	.join("\n")}
+${memory
+  .map(m => `User: ${m.user}\nAI: ${m.ai}`)
+  .join("\n")}
 `
-			}
-		]
-	});
+      }
+    ]
+  });
 
-	return response.choices[0].message.content;
+  return response.choices[0].message.content;
 }
 
 app.listen(port, () => {
-  console.log(`Server running`);
+  console.log(`Server running on ${port}`);
 });
