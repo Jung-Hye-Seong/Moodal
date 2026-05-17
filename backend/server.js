@@ -5,7 +5,6 @@ const { Mistral } = require("@mistralai/mistralai");
 const app = express();
 const port = process.env.PORT || 4000;
 
-app.use(express.json());
 
 app.use(cors({
   origin: [
@@ -14,6 +13,7 @@ app.use(cors({
   credentials: true
 }));
 
+app.use(express.json());
 const client = new Mistral({
   apiKey: "eB6qrTGyIgKLKrSAcxaURlrhE0IsPidD"
 });
